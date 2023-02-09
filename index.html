@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Crypto Arbitrage Opportunity</title>
+  </head>
+  <body>
+    <h1>Crypto Arbitrage Opportunity</h1>
+    <div id="result"></div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+      const axios = require("axios");
+
+      async function getPrice(exchange, symbol) {
+        let price;
+        if (exchange === "binance") {
+          const response = await axios.get(
+            `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`
+          );
+          price = response.data.price;
+        } else if (exchange === "gate") {
+          const response = await axios.get(
+            `https://data.gate.io/api2/1/ticker/${symbol}`
+          );
+          price = response.data.last;
+        }
+        return price;
+      }
+
+      async function findArbitrageOpportunities(symbol) {
+        const exchanges = ["binance", "gate"];
+        const prices = await Promise.all(
+          exchanges.map((exchange) => getPrice(exchange, symbol))
+        );
+        let minPrice = Number.MAX_SAFE_INTEGER;
+        let maxPrice = 0;
+        let minExchange = "";
+        let maxExchange = "";
+        exchanges.forEach((exchange, index) => {
+          if (prices[index] < minPrice) {
+            minPrice = prices[index];
+            minExchange = exchange;
+          }
+          if (prices[index] > maxPrice) {
+            maxPrice = prices[index];
+            maxExchange = exchange;
+          }
+        });
+        if (minPrice < maxPrice) {
+          document.getElementById("result").innerHTML =
+            "<p>Arbitrage opportunity found: buy " +
+            symbol +
+            " on " +
+            minExchange +
+            " at $" +
+            minPrice +
+            " and sell on " +
+            maxExchange +
+            " at $" +
+            maxPrice +
+            "</p><p>Potential profit: $" +
+            (maxPrice - minPrice) +
+            "</p>";
+        } else {
+          document.getElementById("result").innerHTML =
+            "<p>No arbitrage opportunity found for " + symbol + "</p>";
+        }
+      }
+
+      findArbitrageOpportunities("BTCUSDT");
+    </script>
+  </body>
+</html>
